@@ -211,8 +211,8 @@ class Wh_Api_Admin {
 			$input ='<th scope="row"><label for="wh_api_'.$field['id'].'">'.$field['label'].'</label></th>';
 			$input = '<td>'.wp_dropdown_pages( array( 'name' => 'wh_api_'.$field['id'], 'id' => 'wh_api_'.$field['id'], 'selected' => get_option('wh_api_'.$field['id']) ) ).'</td>';
 		} else if ($type == 'checkbox') {
-			 //$selected = ($value) ? 'checked' : '';
-			 //$input ='<th scope="row"><label for="wh_api_'.$field['id'].'">'.$field['label'].'</label></th>';
+			 $selected = ($value) ? 'checked' : '';
+			 $input ='<th scope="row"><label for="wh_api_'.$field['id'].'">'.$field['label'].'</label></th>';
 
 		}
 
