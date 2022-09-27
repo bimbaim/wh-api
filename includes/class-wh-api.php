@@ -27,6 +27,13 @@
  * @subpackage Wh_Api/includes
  * @author     Whello Indonesia <dev@whello.id>
  */
+
+
+ /* -------------------------------------------------------------------------- */
+ /*                                 Run Guzzle                                 */
+ /* -------------------------------------------------------------------------- */
+require 'vendor/autoload.php';
+
 class Wh_Api {
 
 	/**
