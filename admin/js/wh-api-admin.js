@@ -29,4 +29,30 @@
 	 * practising this, we should strive to set a better example in our own work.
 	 */
 
+	 $(function() {
+		$(document).on('click', '#wh_api_update_JSON', function(e){
+			var nonce = $(this).data('nonce');
+			var button = $(this);
+			var parent = $(this).parent();
+			var spinner = '<span class="spinner is-active"></span>';
+				button.addClass('button-disabled');
+			var msg = '<p class="msg" style="color:green;">JSON updated.</p>';
+			$(spinner).insertAfter(button);
+			parent.find('.msg').remove();
+
+			$.ajax({
+				type	: 'POST',
+				url 	: ajaxurl,
+				data 	: {action: 'wh_api_update_json', nonce: nonce},
+				success	: function(response){
+					if (response.success) {
+						parent.append(msg);
+					}
+					button.removeClass('button-disabled');
+					parent.find('.spinner').remove();
+	
+				}
+			});
+		});
+	 });
 })( jQuery );

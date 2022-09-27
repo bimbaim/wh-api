@@ -58,6 +58,9 @@ class Wh_Api_Admin {
 		/* ----------------------------- Assign Variable ---------------------------- */
 		$this->adminfields = $this->admin_fields();
 
+
+		add_action('wp_ajax_wh_api_update_json', [$this, 'wh_api_ajax_update_json']);
+
 	}
 
 	/**
@@ -147,6 +150,7 @@ class Wh_Api_Admin {
 	/* -------------------------------------------------------------------------- */
 	public function wh_api_admin_menu() { 
 
+		/* -------------------------------- Main Menu ------------------------------- */
 		add_menu_page( 
 			'WH API', 
 			'WH API', 
@@ -156,6 +160,16 @@ class Wh_Api_Admin {
 			'dashicons-media-spreadsheet' 
 
 		   );
+		
+		/* --------------------------------- Submenu -------------------------------- */
+		add_submenu_page(
+			'wh_api',
+			__( 'Mapping Data', 'whello' ),
+			__( 'Mapping Data', 'whello' ),
+			'manage_options',
+			'wh_api_mapping',
+			[$this, 'wh_api_mapping_data_callback']
+		);
 	  }
 
 	  /* ------------------ Callback Function Admin Menu Content ------------------ */
@@ -171,8 +185,62 @@ class Wh_Api_Admin {
 						echo '<tr>'.$this->generate_field($field['type'], $field).'</tr>';
 					} ?>
 					</table>
+		
+				<h3><?php echo __('API Settings', 'whello') ?></h3>
+				<table class="form-table">
+					<tr>
+						<th class="row"><?php echo __('First update time', 'whello') ?></th>
+						<td>
+							<input type="text" name="wh_api_first_update" class="regular-text code" placeholder="6:00" value="<?php echo get_option('wh_api_first_update') ?>">
+							<p class="description">Enter the 24-hours time format eg. <?php echo current_time('H:i'); ?></p>
+						</td>
+					</tr>
+					<tr>
+					<tr>
+						<th class="row"><?php echo __('Update period (hours)', 'whello') ?></th>
+						<td> 
+							<input type="number" name="wh_api_update_period" class="regular-text code" placeholder="6" value="<?php echo get_option('wh_api_update_period') ?>"> 
+						</td>
+	    			</tr>
+					<tr>
+						<th class="row"><?php echo __('Manual Update JSON File', 'whello') ?></th>
+						<td>
+							<?php 
+								$uploads = wp_upload_dir();
+								$upload_url = $uploads['baseurl'];
+								$upload_path = $uploads['basedir'];
+
+								$json_url = $upload_url .'/wh-api.json';
+							?>
+							<div style="display:flex;">
+								<button class="button" id="wh_api_update_json" data-nonce="<?php echo esc_attr(wp_create_nonce( 'wh-api-json' )); ?>"><?php echo __('Update JSON', 'whello') ?></button>
+							</div>
+							<p class="description">
+								<?php 
+									if (file_exists($upload_path .'/wh-api.json')) {
+										echo 'JSON file: <a href="'.$json_url.'">'.$json_url.'</a>';
+									} 
+								?>
+							</p>
+						</td>
+	    			</tr>						
+				</table>
 		 <?php submit_button(); ?>
 		</form>
+		<?php
+	}
+
+	/* --------------------- Callback function Mapping Data --------------------- */
+	public function wh_api_mapping_data_callback(){
+		?>
+		<h1> <?php esc_html_e( 'Mapping Data.', 'whello' ); ?> </h1>
+			<form method="POST" action="options.php">
+			<?php settings_fields( 'wh-api-settings' );
+					do_settings_sections( 'wh-api-settings' ); ?>
+					<table id="wh-api-mapping" class="form-table">
+					</table>
+					<?php submit_button(); ?>
+			</form>
 		<?php
 	}
 
@@ -184,6 +252,8 @@ class Wh_Api_Admin {
 		foreach ($this->adminfields as $key => $field) {
 	    	register_setting( 'wh-api-settings', 'wh_api_'.$field['id'] );
 	    }
+		register_setting( 'wh-api-settings', 'wh_api_first_update' );
+    	register_setting( 'wh-api-settings', 'wh_api_update_period' );
     	
 	}
 
@@ -218,6 +288,44 @@ class Wh_Api_Admin {
 
 		return $input;
 	}
+
+	public function wh_api_ajax_update_json(){
+		
+		$apikey = get_option('wh_api_apiKey');
+		$email = get_option('wh_api_email');
+		$password = get_option('wh_api_password');
+		$authurl = get_option('wh_api_authUrl');
+
+		$results = array();
+
+		$client = new Client([
+		    'base_uri' => $authurl,
+		    'timeout'  => 2.0,
+		]);
+
+		try {
+			$response = $client->request('POST', $authurl, [
+				    'headers' => [
+				        'Content-Type' => 'application/json'
+				    ]
+			    ]
+			);
+
+			$body = $response->getBody();
+			$arr_body = json_decode($body);
+
+			$results['success'] = true;
+
+		} catch (RequestException $e) {
+			$results['success'] = false;
+			
+		}
+
+		echo wp_send_json($results);
+		
+		wp_die();
+	}
+	
 	
 
 }
